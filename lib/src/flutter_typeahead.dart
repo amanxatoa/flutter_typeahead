@@ -232,6 +232,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_typeahead/src/keyboard_suggestion_selection_notifier.dart';
 import 'package:flutter_typeahead/src/should_refresh_suggestion_focus_index_notifier.dart';
+import 'package:never_behind_keyboard/never_behind_keyboard.dart';
 
 import 'typedef.dart';
 import 'utils.dart';
@@ -1046,7 +1047,6 @@ class _TypeAheadFieldState<T> extends State<TypeAheadField<T>>
         onSubmitted: widget.textFieldConfiguration.onSubmitted,
         onEditingComplete: widget.textFieldConfiguration.onEditingComplete,
         onTap: widget.textFieldConfiguration.onTap,
-        onTapOutside: (_){},
         scrollPadding: widget.textFieldConfiguration.scrollPadding,
         textInputAction: widget.textFieldConfiguration.textInputAction,
         textCapitalization: widget.textFieldConfiguration.textCapitalization,
@@ -1422,34 +1422,36 @@ class _SuggestionsListState<T> extends State<_SuggestionsList<T>>
   }
 
   Widget createSuggestionsWidget() {
-    Widget child = ListView(
-      padding: EdgeInsets.zero,
-      primary: false,
-      shrinkWrap: true,
-      keyboardDismissBehavior: widget.hideKeyboardOnDrag
-          ? ScrollViewKeyboardDismissBehavior.onDrag
-          : ScrollViewKeyboardDismissBehavior.manual,
-      controller: _scrollController,
-      reverse: widget.suggestionsBox!.direction == AxisDirection.down
-          ? false
-          : widget.suggestionsBox!.autoFlipListDirection,
-      children: List.generate(this._suggestions!.length, (index) {
-        final suggestion = _suggestions!.elementAt(index);
-        final focusNode = _focusNodes[index];
+    Widget child = NeverBehindKeyboardArea(
+      scrollView: ListView(
+        padding: EdgeInsets.zero,
+        primary: false,
+        shrinkWrap: true,
+        keyboardDismissBehavior: widget.hideKeyboardOnDrag
+            ? ScrollViewKeyboardDismissBehavior.onDrag
+            : ScrollViewKeyboardDismissBehavior.manual,
+        controller: _scrollController,
+        reverse: widget.suggestionsBox!.direction == AxisDirection.down
+            ? false
+            : widget.suggestionsBox!.autoFlipListDirection,
+        children: List.generate(this._suggestions!.length, (index) {
+          final suggestion = _suggestions!.elementAt(index);
+          final focusNode = _focusNodes[index];
 
-        return InkWell(
-          key: TestKeys.getSuggestionKey(index),
-          focusColor: Theme.of(context).hoverColor,
-          focusNode: focusNode,
-          child: widget.itemBuilder!(context, suggestion),
-          onTap: () {
-            // * we give the focus back to the text field
-            widget.giveTextFieldFocus();
+          return InkWell(
+            key: TestKeys.getSuggestionKey(index),
+            focusColor: Theme.of(context).hoverColor,
+            focusNode: focusNode,
+            child: widget.itemBuilder!(context, suggestion),
+            onTap: () {
+              // * we give the focus back to the text field
+              widget.giveTextFieldFocus();
 
-            widget.onSuggestionSelected!(suggestion);
-          },
-        );
-      }),
+              widget.onSuggestionSelected!(suggestion);
+            },
+          );
+        }),
+      ),
     );
 
     if (widget.decoration!.hasScrollbar) {
